@@ -12,7 +12,7 @@ public interface PinyinConvertors {
      * @return 一个字符串，由[拼音][分隔符][拼音]构成
      */
     static String convert(String text, String separator, boolean remainNone) {
-        final List<Pinyin> pinyinList = PinyinConvertor.instance.convert(text, remainNone);
+        final List<Pinyin> pinyinList = PinyinConvertor.instance.convert(text, true);
         final int length = pinyinList.size();
         final StringBuilder result = new StringBuilder(length * (5 + separator.length()));
         for (int i = 0; i < text.length(); i++) {
