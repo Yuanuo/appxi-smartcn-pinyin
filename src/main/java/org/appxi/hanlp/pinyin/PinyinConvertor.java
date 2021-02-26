@@ -16,7 +16,7 @@ import java.util.*;
 
 
 public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
-    private static final String pathTxt = "/appxi/hanlpPinyin/data.txt";
+    private static final String pathTxt = "appxi/hanlpPinyin/data.txt";
     private static final String pathBin = pathTxt.replace(".txt", ".bin").substring(1);
 
     public static final PinyinConvertor instance = new PinyinConvertor();
@@ -27,7 +27,8 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
 
     @Override
     protected final void loadDictionaries(DoubleArrayTrieByAhoCorasick<Pinyin[]> trie) {
-        final List<Path> fileTxts = HanlpHelper.ensureFilesExtracted(v -> getClass().getResourceAsStream(v), pathTxt);
+        final List<Path> fileTxts = FileHelper.extractFiles(file -> getClass().getResourceAsStream("/".concat(file)),
+                HanlpHelper::resolveData, pathTxt);
 
         // load from bin
         final Path fileBin = HanlpHelper.resolveCache(pathBin);
