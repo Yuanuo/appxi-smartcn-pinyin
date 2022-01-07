@@ -1,24 +1,23 @@
-package org.appxi.hanlp.pinyin;
+package org.appxi.smartcn.pinyin;
 
-import org.appxi.hanlp.util.HanlpHelper;
-import org.appxi.hanlp.util.bytes.ByteArray;
-import org.appxi.hanlp.util.bytes.BytesHelper;
-import org.appxi.hanlp.util.dictionary.StringDictionary;
-import org.appxi.hanlp.util.trie.AbstractDictionaryTrieApp;
-import org.appxi.hanlp.util.trie.DoubleArrayTrieByAhoCorasick;
+import org.appxi.smartcn.util.SmartCNHelper;
+import org.appxi.smartcn.util.bytes.ByteArray;
+import org.appxi.smartcn.util.bytes.BytesHelper;
+import org.appxi.smartcn.util.dictionary.StringDictionary;
+import org.appxi.smartcn.util.trie.AbstractDictionaryTrieApp;
+import org.appxi.smartcn.util.trie.DoubleArrayTrieByAhoCorasick;
 import org.appxi.util.FileHelper;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 
 public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
-    private static final String pathTxt = "appxi/hanlpPinyin/data.txt";
-    private static final String pathBin = pathTxt.replace(".txt", ".bin").substring(1);
-
     public static final PinyinConvertor instance = new PinyinConvertor();
     public static final Pinyin[] pinyins = Pinyin.values();
 
@@ -27,11 +26,13 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
 
     @Override
     protected final void loadDictionaries(DoubleArrayTrieByAhoCorasick<Pinyin[]> trie) {
-        final List<Path> fileTxts = FileHelper.extractFiles(file -> getClass().getResourceAsStream("/".concat(file)),
-                HanlpHelper::resolveData, pathTxt);
+        final List<Path> fileTxts = FileHelper.extractFiles(
+                file -> getClass().getResourceAsStream(file),
+                file -> SmartCNHelper.resolveData("pinyin").resolve(file),
+                "data.txt");
 
         // load from bin
-        final Path fileBin = HanlpHelper.resolveCache(pathBin);
+        final Path fileBin = SmartCNHelper.resolveCache("pinyin/data.bin");
         if (!FileHelper.isTargetFileUpdatable(fileBin, fileTxts.toArray(new Path[0]))) {
             final long st = System.currentTimeMillis();
             try {
@@ -50,15 +51,18 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
                     return;
                 }
             } finally {
-                HanlpHelper.LOG.info("loadBin used times: " + (System.currentTimeMillis() - st));
+                SmartCNHelper.logger.info("loadBin used after: " + (System.currentTimeMillis() - st));
             }
         }
         // load primary txt
         final TreeMap<String, Pinyin[]> primaryMap = new TreeMap<>();
-        final Path fileTxt = HanlpHelper.resolveData(pathTxt);
+        final Path fileTxt = SmartCNHelper.resolveData("pinyin/data.txt");
         if (FileHelper.exists(fileTxt)) {
             final StringDictionary dictionary = new StringDictionary("=");
-            dictionary.load(HanlpHelper.ensureStream(fileTxt));
+            try (InputStream stream = Files.newInputStream(fileTxt)) {
+                dictionary.load(stream);
+            } catch (IOException ignore) {
+            }
             dictionary.walkEntries((k, v) -> {
                 final String[] tmpArr = v.split(",");
                 final Pinyin[] valArr = new Pinyin[tmpArr.length];
@@ -67,7 +71,7 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
                         valArr[i] = Pinyin.valueOf(tmpArr[i]);
                     }
                 } catch (IllegalArgumentException e) {
-                    HanlpHelper.LOG.severe("拼音词典" + fileTxt + "有问题在【" + k + "=" + v + "】，e=" + e);
+                    SmartCNHelper.logger.warn("拼音词典" + fileTxt + "有问题在【" + k + "=" + v + "】", e);
                     return; // continue for next one
                 }
                 primaryMap.put(k, valArr);
@@ -76,7 +80,7 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
         // build to trie
         long st = System.currentTimeMillis();
         trie.build(primaryMap);
-        HanlpHelper.LOG.info("trie.build + " + (System.currentTimeMillis() - st));
+        SmartCNHelper.logger.info("trie.build + " + (System.currentTimeMillis() - st));
         // save to bin
         FileHelper.makeParents(fileBin);
         st = System.currentTimeMillis();
@@ -96,7 +100,7 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
                 e.printStackTrace();
             }
         }
-        HanlpHelper.LOG.info("saveBin used times: " + (System.currentTimeMillis() - st));
+        SmartCNHelper.logger.info("saveBin used after: " + (System.currentTimeMillis() - st));
     }
 
     public final List<Pinyin> convert(String string) {

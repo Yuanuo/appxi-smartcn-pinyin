@@ -860,6 +860,8 @@
 乼=zhu4
 乽=zhe3
 乾=qian2,gan1
+乾达婆=qian2,da2,po2
+乾隆藏=qian2,long3,zang4
 乿=zhi4,luan4
 亀=gui1
 亁=qian2
@@ -1382,6 +1384,8 @@
 佚=yi4,die2
 佛=fo2,fu2,bi4,bo2
 佛头著粪=fo2,tou2,zhuo2,fen4
+佛乐=fo2,yue4
+佛传=fo2,zhuan4
 作=zuo4
 作为=zuo4,wei2
 作乐=zuo4,yue4
@@ -5750,6 +5754,7 @@
 大腹便便=da4,fu4,pian2,pian2
 大藏=da4,zang4
 大藏经=da4,zang4,jing1
+大正藏=da4,zheng4,zang4
 大行大市=da4,hang2,da4,shi4
 大行星=da4,xing2,xing1
 大调=da4,diao4
@@ -6045,6 +6050,7 @@
 如登春台=ru2,de2,chun1,tai2
 如芒刺背=ru2,mang2,ci4,bei4
 如芒在背=ru2,mang2,zai4,bei4
+如来藏=ru2,lai2,zang4
 妃=fei1,pei4
 妃嫔=fei1,bin1
 妃子=fei1,zi5
@@ -7912,6 +7918,7 @@
 庑=wu3
 庒=zhuang1
 库=ku4
+库藏=ku4,zang4
 应=ying1,ying4
 应举=ying4,ju3
 应从=ying4,cong2
@@ -13660,6 +13667,7 @@
 法家拂士=fa3,jia1,bi4,shi4
 法帖=fa3,tie4
 法轮常转=fa3,lun2,chang2,zhuan4
+法藏=fa3,zang4
 泖=mao3
 泗=si4
 泘=hu1
@@ -17160,6 +17168,7 @@
 眼晕=yan3,yun4
 眼花撩乱=yan3,hua1,liao2,luan4
 眼见得=yan3,jian4,de5
+眼藏=yan3,zang4
 眽=mo4
 眾=zhong4
 眿=mo4
@@ -18312,6 +18321,7 @@
 空隙=kong4,xi4
 空难=kong1,nan4
 空额=kong4,e2
+空性藏=kong1,xing4,zang4
 穻=yu1,yu3
 穼=shen1
 穽=jing3
@@ -22043,6 +22053,13 @@
 藏蓝=zang4,lan2
 藏踪蹑迹=cang2,zong1,nie4,ji1
 藏青=zang4,qing1
+藏文=zang4,wen2
+藏语=zang4,yu3
+藏经=zang4,jing1
+藏密=zang4,mi4
+藏传=zang4,chuan2
+藏汉=zang4,han4
+藏地=zang4,di4
 藐=miao3
 藑=qiong2
 藒=qi4
@@ -30706,6 +30723,7 @@
 龙血凤髓=long2,xue4,feng4,sui3
 龙血玄黄=long2,xue3,xuan2,huang2
 龙门刨=long2,men2,bao4
+龙藏=long3,zang4
 龚=gong1
 龛=kan1
 龜=gui1,jun1,qiu1

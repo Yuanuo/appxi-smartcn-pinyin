@@ -5,18 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.appxi</groupId>
-    <artifactId>appxi-hanlp-pinyin</artifactId>
-    <version>21.02.26</version>
+    <artifactId>smartcn-pinyin</artifactId>
+    <version>22.01.01</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>16</maven.compiler.release>
+        <maven.compiler.release>17</maven.compiler.release>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.appxi</groupId>
-            <artifactId>appxi-hanlp-shared</artifactId>
+            <artifactId>smartcn-shared</artifactId>
             <version>[1.0.0,)</version>
         </dependency>
     </dependencies>

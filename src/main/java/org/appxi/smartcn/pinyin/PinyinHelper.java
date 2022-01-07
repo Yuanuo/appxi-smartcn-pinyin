@@ -9,7 +9,7 @@
  * This source is subject to the LinrunSpace License. Please contact 上海林原信息科技有限公司 to get more information.
  * </copyright>
  */
-package org.appxi.hanlp.pinyin;
+package org.appxi.smartcn.pinyin;
 
 import java.util.ArrayList;
 import java.util.List;

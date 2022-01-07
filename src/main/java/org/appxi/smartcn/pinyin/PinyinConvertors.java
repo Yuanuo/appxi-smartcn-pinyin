@@ -1,4 +1,4 @@
-package org.appxi.hanlp.pinyin;
+package org.appxi.smartcn.pinyin;
 
 import java.util.List;
 

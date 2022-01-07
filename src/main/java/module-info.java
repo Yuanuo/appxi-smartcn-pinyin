@@ -1,7 +1,5 @@
-module appxi.hanlp.pinyin {
-    requires java.logging;
-    requires appxi.shared;
-    requires appxi.hanlp.shared;
+module appxi.smartcn.pinyin {
+    requires appxi.smartcn.shared;
 
-    exports org.appxi.hanlp.pinyin;
+    exports org.appxi.smartcn.pinyin;
 }
