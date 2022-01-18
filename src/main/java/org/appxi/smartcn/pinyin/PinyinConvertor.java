@@ -14,7 +14,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
@@ -103,19 +107,11 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
         SmartCNHelper.logger.info("saveBin used after: " + (System.currentTimeMillis() - st));
     }
 
-    public final List<Pinyin> convert(String string) {
-        return convert(true, string.toCharArray());
+    public final List<Map.Entry<Character, Pinyin>> convert(String string) {
+        return convert(string.toCharArray());
     }
 
-    public final List<Pinyin> convert(String string, boolean remainNone) {
-        return convert(remainNone, string.toCharArray());
-    }
-
-    public final List<Pinyin> convert(char... chars) {
-        return convert(true, chars);
-    }
-
-    public final List<Pinyin> convert(boolean remainNone, char... chars) {
+    public final List<Map.Entry<Character, Pinyin>> convert(char... chars) {
         final Pinyin[][] wordNet = new Pinyin[chars.length][];
         getDictionaryTrie().parseText(chars, (begin, end, value) -> {
             int length = end - begin;
@@ -123,15 +119,16 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
                 wordNet[begin] = length == 1 ? new Pinyin[]{value[0]} : value;
             }
         });
-        final List<Pinyin> result = new ArrayList<>(chars.length);
-        for (int offset = 0; offset < wordNet.length; ) {
-            if (wordNet[offset] == null) {
-                if (remainNone) result.add(Pinyin.none5);
-                ++offset;
+        //
+        final List<Map.Entry<Character, Pinyin>> result = new ArrayList<>(chars.length);
+        for (int i = 0; i < wordNet.length; ) {
+            if (wordNet[i] == null) {
+                result.add(new AbstractMap.SimpleEntry<>(chars[i++], null));
                 continue;
             }
-            Collections.addAll(result, wordNet[offset]);
-            offset += wordNet[offset].length;
+            for (Pinyin itm : wordNet[i]) {
+                result.add(new AbstractMap.SimpleEntry<>(chars[i++], itm));
+            }
         }
         return result;
     }

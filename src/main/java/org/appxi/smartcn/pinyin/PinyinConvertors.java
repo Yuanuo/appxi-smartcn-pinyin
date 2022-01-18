@@ -1,6 +1,8 @@
 package org.appxi.smartcn.pinyin;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public interface PinyinConvertors {
     /**
@@ -12,16 +14,12 @@ public interface PinyinConvertors {
      * @return 一个字符串，由[拼音][分隔符][拼音]构成
      */
     static String convert(String text, String separator, boolean remainNone) {
-        final List<Pinyin> pinyinList = PinyinConvertor.instance.convert(text, true);
-        final int length = pinyinList.size();
-        final StringBuilder result = new StringBuilder(length * (5 + separator.length()));
-        for (int i = 0; i < text.length(); i++) {
-            final Pinyin pinyin = pinyinList.get(i);
-            if (pinyin == Pinyin.none5 && !remainNone) result.append(text.charAt(i));
-            else result.append(pinyin.getPinyinWithoutTone());
-            if (i < length) result.append(separator);
-        }
-        return result.toString();
+        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertor.instance.convert(text);
+        return pinyinList.stream()
+                .map(entry -> null == entry.getValue()
+                        ? (remainNone ? Pinyin.none5.getPinyinWithoutTone() : String.valueOf(entry.getKey()))
+                        : entry.getValue().getPinyinWithoutTone())
+                .collect(Collectors.joining(separator));
     }
 
     /**
@@ -30,8 +28,8 @@ public interface PinyinConvertors {
      * @param text 待解析的文本
      * @return 一个拼音列表
      */
-    static List<Pinyin> convert(String text) {
-        return PinyinConvertor.instance.convert(text, true);
+    static List<Map.Entry<Character, Pinyin>> convert(String text) {
+        return PinyinConvertor.instance.convert(text);
     }
 
     /**
@@ -43,13 +41,11 @@ public interface PinyinConvertors {
      * @return 一个字符串，由[首字母][分隔符][首字母]构成
      */
     static String convertToFirstChars(String text, String separator, boolean remainNone) {
-        final List<Pinyin> pinyinList = PinyinConvertor.instance.convert(text, remainNone);
-        final int length = pinyinList.size();
-        final StringBuilder result = new StringBuilder(length * (1 + separator.length()));
-        for (Pinyin pinyin : pinyinList) {
-            if (result.length() > 0) result.append(separator);
-            result.append(pinyin.getFirstChar());
-        }
-        return result.toString();
+        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertor.instance.convert(text);
+        return pinyinList.stream()
+                .map(entry -> String.valueOf(null == entry.getValue()
+                        ? (remainNone ? Pinyin.none5.getFirstChar() : entry.getKey())
+                        : entry.getValue().getFirstChar()))
+                .collect(Collectors.joining(separator));
     }
 }
