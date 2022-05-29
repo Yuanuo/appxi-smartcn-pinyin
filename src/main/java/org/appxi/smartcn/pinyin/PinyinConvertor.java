@@ -22,33 +22,33 @@ import java.util.TreeMap;
 
 
 public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
-    public static final PinyinConvertor instance = new PinyinConvertor();
-    public static final Pinyin[] pinyins = Pinyin.values();
+    public static final PinyinConvertor ONE = new PinyinConvertor();
 
     private PinyinConvertor() {
     }
 
     @Override
     protected final void loadDictionaries(DoubleArrayTrieByAhoCorasick<Pinyin[]> trie) {
-        final List<Path> fileTxts = FileHelper.extractFiles(
+        final List<Path> txtFiles = FileHelper.extractFiles(
                 file -> getClass().getResourceAsStream(file),
                 file -> SmartCNHelper.resolveData("pinyin").resolve(file),
                 "data.txt");
 
         // load from bin
-        final Path fileBin = SmartCNHelper.resolveCache("pinyin/data.bin");
-        if (!FileHelper.isTargetFileUpdatable(fileBin, fileTxts.toArray(new Path[0]))) {
+        final Path binFile = SmartCNHelper.resolveCache("pinyin/data.bin");
+        if (!FileHelper.isTargetFileUpdatable(binFile, txtFiles.toArray(new Path[0]))) {
             final long st = System.currentTimeMillis();
             try {
-                final ByteArray byteArray = BytesHelper.createByteArray(fileBin);
+                final ByteArray byteArray = BytesHelper.createByteArray(binFile);
                 if (null != byteArray) {
+                    final Pinyin[] valueEnums = Pinyin.values();
                     final int totalSize = byteArray.nextInt();
                     final Pinyin[][] valueArray = new Pinyin[totalSize][];
                     for (int i = 0; i < valueArray.length; ++i) {
                         final int itemSize = byteArray.nextInt();
                         valueArray[i] = new Pinyin[itemSize];
                         for (int j = 0; j < itemSize; ++j) {
-                            valueArray[i][j] = pinyins[byteArray.nextInt()];
+                            valueArray[i][j] = valueEnums[byteArray.nextInt()];
                         }
                     }
                     trie.load(byteArray, valueArray);
@@ -86,10 +86,10 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
         trie.build(primaryMap);
         SmartCNHelper.logger.info("trie.build + " + (System.currentTimeMillis() - st));
         // save to bin
-        FileHelper.makeParents(fileBin);
+        FileHelper.makeParents(binFile);
         st = System.currentTimeMillis();
         if (trie.size() == primaryMap.size()) {
-            try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(fileBin)))) {
+            try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(binFile)))) {
                 out.writeInt(primaryMap.size());
                 Pinyin[] value;
                 for (Map.Entry<String, Pinyin[]> entry : primaryMap.entrySet()) {

@@ -1,148 +1,95 @@
-/*
- * <summary></summary>
- * <author>He Han</author>
- * <email>hankcs.cn@gmail.com</email>
- * <create-date>2014/11/2 11:19</create-date>
- *
- * <copyright file="PinyinHelper.java" company="上海林原信息科技有限公司">
- * Copyright (c) 2003-2014, 上海林原信息科技有限公司. All Right Reserved, http://www.linrunsoft.com/
- * This source is subject to the LinrunSpace License. Please contact 上海林原信息科技有限公司 to get more information.
- * </copyright>
- */
 package org.appxi.smartcn.pinyin;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * @author hankcs
- */
-class PinyinHelper {
+public interface PinyinHelper {
     /**
-     * Convert tone numbers to tone marks using Unicode <br/><br/>
-     * <p/>
-     * <b>Algorithm for determining location of tone mark</b><br/>
-     * <p/>
-     * A simple algorithm for determining the vowel on which the tone mark
-     * appears is as follows:<br/>
-     * <p/>
-     * <ol>
-     * <li>First, look for an "a" or an "e". If either vowel appears, it takes
-     * the tone mark. There are no possible pinyin syllables that contain both
-     * an "a" and an "e".
-     * <p/>
-     * <li>If there is no "a" or "e", look for an "ou". If "ou" appears, then
-     * the "o" takes the tone mark.
-     * <p/>
-     * <li>If none of the above cases hold, then the last vowel in the syllable
-     * takes the tone mark.
-     * <p/>
-     * </ol>
+     * 转化为拼音
      *
-     * @param pinyinStr the ascii represention with tone numbers
-     * @return the unicode represention with tone marks
+     * @param text       文本
+     * @param separator  分隔符
+     * @param remainNone 有些字没有拼音（如标点），是否保留它们的拼音（true用none表示，false用原字符表示）
+     * @return 一个字符串，由[拼音][分隔符][拼音]构成
      */
-    public static String convertToneNumber2ToneMark(String pinyinStr) {
-        pinyinStr = pinyinStr.toLowerCase();
+    static String convert(String text, String separator, boolean remainNone) {
+        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertor.ONE.convert(text);
+        return pinyinList.stream()
+                .map(entry -> null == entry.getValue()
+                        ? (remainNone ? Pinyin.none5.getPinyinWithoutTone() : String.valueOf(entry.getKey()))
+                        : entry.getValue().getPinyinWithoutTone())
+                .collect(Collectors.joining(separator));
+    }
 
-        if (!pinyinStr.matches("[a-z]*[1-5]?")) {
-            return pinyinStr;
-        }
-        // bad format
+    /**
+     * 转化为拼音
+     *
+     * @param text 待解析的文本
+     * @return 一个拼音列表
+     */
+    static List<Map.Entry<Character, Pinyin>> convert(String text) {
+        return PinyinConvertor.ONE.convert(text);
+    }
 
-        final char defautlCharValue = '$';
-        final int defautlIndexValue = -1;
+    /**
+     * 转化为拼音（首字母）
+     *
+     * @param text       文本
+     * @param separator  分隔符
+     * @param remainNone 有些字没有拼音（如标点），是否保留它们（用none表示）
+     * @return 一个字符串，由[首字母][分隔符][首字母]构成
+     */
+    static String convertToFirstChars(String text, String separator, boolean remainNone) {
+        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertor.ONE.convert(text);
+        return pinyinList.stream()
+                .map(entry -> String.valueOf(null == entry.getValue()
+                        ? (remainNone ? Pinyin.none5.getFirstChar() : entry.getKey())
+                        : entry.getValue().getFirstChar()))
+                .collect(Collectors.joining(separator));
+    }
 
-        char unmarkedVowel = defautlCharValue;
-        int indexOfUnmarkedVowel = defautlIndexValue;
+    /**
+     * 转换文字为单空格分隔的拼音，不带音标
+     *
+     * @param text 要转换的文字
+     * @return 拼音
+     */
+    static String pinyin(String text) {
+        return pinyin(text, false);
+    }
 
-        final char charA = 'a';
-        final char charE = 'e';
-        final String ouStr = "ou";
-        final String allUnmarkedVowelStr = "aeiouv";
-        final String allMarkedVowelStr = "āáǎàaēéěèeīíǐìiōóǒòoūúǔùuǖǘǚǜü";
+    /**
+     * 转换文字为单空格分隔的拼音
+     *
+     * @param text 要转换的文字
+     * @param tone 是否带有音标
+     * @return 拼音
+     */
 
-        if (!pinyinStr.matches("[a-z]*[1-5]")) {
-            // only replace v with ü (umlat) character
-            return pinyinStr.replaceAll("v", "ü");
-        }
-        // input string has no any tune number
+    static String pinyin(String text, boolean tone) {
+        return pinyin(text, tone, " ");
+    }
 
-        int tuneNumber =
-                Character.getNumericValue(pinyinStr.charAt(pinyinStr.length() - 1));
-
-        int indexOfA = pinyinStr.indexOf(charA);
-        int indexOfE = pinyinStr.indexOf(charE);
-        int ouIndex = pinyinStr.indexOf(ouStr);
-
-        if (-1 != indexOfA) {
-            indexOfUnmarkedVowel = indexOfA;
-            unmarkedVowel = charA;
-        } else if (-1 != indexOfE) {
-            indexOfUnmarkedVowel = indexOfE;
-            unmarkedVowel = charE;
-        } else if (-1 != ouIndex) {
-            indexOfUnmarkedVowel = ouIndex;
-            unmarkedVowel = ouStr.charAt(0);
-        } else {
-            for (int i = pinyinStr.length() - 1; i >= 0; i--) {
-                if (String.valueOf(pinyinStr.charAt(i)).matches(
-                        "[" + allUnmarkedVowelStr + "]")) {
-                    indexOfUnmarkedVowel = i;
-                    unmarkedVowel = pinyinStr.charAt(i);
-                    break;
-                }
+    /**
+     * 转换文字为 separator 分隔的拼音
+     *
+     * @param text      要转换的文字
+     * @param tone      是否带有音标
+     * @param separator 分隔符
+     * @return 拼音
+     */
+    static String pinyin(String text, boolean tone, String separator) {
+        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertor.ONE.convert(text);
+        final StringBuilder result = new StringBuilder(pinyinList.size() * (6));
+        for (Map.Entry<Character, Pinyin> entry : pinyinList) {
+            if (null == entry.getValue()) result.append(entry.getKey());
+            else {
+                String py = tone ? entry.getValue().getPinyinWithToneMark() : entry.getValue().getPinyinWithoutTone();
+                result.append(separator).append(py).append(separator);
             }
         }
 
-        if ((defautlCharValue != unmarkedVowel) && (defautlIndexValue != indexOfUnmarkedVowel)) {
-            int rowIndex = allUnmarkedVowelStr.indexOf(unmarkedVowel);
-            int columnIndex = tuneNumber - 1;
-            int vowelLocation = rowIndex * 5 + columnIndex;
-            char markedVowel = allMarkedVowelStr.charAt(vowelLocation);
-
-            final StringBuilder result = new StringBuilder();
-            result.append(pinyinStr.substring(0, indexOfUnmarkedVowel).replaceAll("v",
-                    "ü"));
-            result.append(markedVowel);
-            result.append(pinyinStr.substring(indexOfUnmarkedVowel + 1,
-                    pinyinStr.length() - 1).replaceAll("v", "ü"));
-            return result.toString();
-        } else
-        // error happens in the procedure of locating vowel
-        {
-            return pinyinStr;
-        }
-    }
-
-    /**
-     * 将列表转为数组
-     *
-     * @param pinyinList
-     * @return
-     */
-    public static Pinyin[] convertList2Array(List<Pinyin> pinyinList) {
-        return pinyinList.toArray(new Pinyin[0]);
-    }
-
-    public static Pinyin removeTone(Pinyin p) {
-        return Pinyin.none5;
-    }
-
-    /**
-     * 转换List<Pinyin> pinyinList到List<String>，其中的String为带声调符号形式
-     *
-     * @param pinyinList
-     * @return
-     */
-    public static List<String> convertPinyinList2TonePinyinList(List<Pinyin> pinyinList) {
-        final List<String> result = new ArrayList<>(pinyinList.size());
-        for (Pinyin pinyin : pinyinList) {
-            result.add(pinyin.getPinyinWithToneMark());
-        }
-        return result;
-    }
-
-    private PinyinHelper() {
+        return result.toString().replaceAll("(" + separator + "){2,}", separator).strip();
     }
 }
