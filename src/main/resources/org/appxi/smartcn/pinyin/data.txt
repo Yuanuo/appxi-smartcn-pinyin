@@ -30744,3 +30744,5 @@
 还款=huan2,kuan3
 侠传=xia2,zhuan4
 僧祇=seng1,qi2
+𬬻=lu2
+𦶟=ruo4
