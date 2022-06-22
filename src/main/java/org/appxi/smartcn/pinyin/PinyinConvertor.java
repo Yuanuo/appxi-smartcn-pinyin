@@ -7,11 +7,15 @@ import org.appxi.smartcn.util.dictionary.StringDictionary;
 import org.appxi.smartcn.util.trie.AbstractDictionaryTrieApp;
 import org.appxi.smartcn.util.trie.DoubleArrayTrieByAhoCorasick;
 import org.appxi.util.FileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
@@ -20,23 +24,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-
 public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
+    private static final Logger logger = LoggerFactory.getLogger(PinyinConvertor.class);
+
     public static final PinyinConvertor ONE = new PinyinConvertor();
 
     private PinyinConvertor() {
+        // 删除旧版数据
+        FileHelper.deleteDirectory(SmartCNHelper.resolveData("pinyin"));
+        FileHelper.deleteDirectory(SmartCNHelper.resolveCache("pinyin"));
     }
 
     @Override
     protected final void loadDictionaries(DoubleArrayTrieByAhoCorasick<Pinyin[]> trie) {
-        final List<Path> txtFiles = FileHelper.extractFiles(
-                file -> getClass().getResourceAsStream(file),
-                file -> SmartCNHelper.resolveData("pinyin").resolve(file),
-                "data.txt");
-
-        // load from bin
-        final Path binFile = SmartCNHelper.resolveCache("pinyin/data.bin");
-        if (!FileHelper.isTargetFileUpdatable(binFile, txtFiles.toArray(new Path[0]))) {
+        // default
+        URLConnection txtFileDefault = null;
+        try {
+            txtFileDefault = getClass().getResource("data.txt").openConnection();
+        } catch (Exception e) {
+            logger.warn("should never here", e);
+        }
+        // user managed
+        final Path txtFileManaged = SmartCNHelper.resolveData("pinyin.txt");
+        // cache file
+        final Path binFile = SmartCNHelper.resolveCache("pinyin.bin");
+        // 检查缓存bin文件是否需要重建
+        if (!FileHelper.isTargetFileUpdatable(binFile, txtFileDefault, txtFileManaged)) {
+            // load from bin
             final long st = System.currentTimeMillis();
             try {
                 final ByteArray byteArray = BytesHelper.createByteArray(binFile);
@@ -55,36 +69,20 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
                     return;
                 }
             } finally {
-                SmartCNHelper.logger.info("loadBin used after: " + (System.currentTimeMillis() - st));
+                logger.info("loadBin used time: " + (System.currentTimeMillis() - st));
             }
         }
         // load primary txt
         final TreeMap<String, Pinyin[]> primaryMap = new TreeMap<>();
-        final Path fileTxt = SmartCNHelper.resolveData("pinyin/data.txt");
-        if (FileHelper.exists(fileTxt)) {
-            final StringDictionary dictionary = new StringDictionary("=");
-            try (InputStream stream = Files.newInputStream(fileTxt)) {
-                dictionary.load(stream);
-            } catch (IOException ignore) {
-            }
-            dictionary.walkEntries((k, v) -> {
-                final String[] tmpArr = v.split(",");
-                final Pinyin[] valArr = new Pinyin[tmpArr.length];
-                try {
-                    for (int i = 0; i < tmpArr.length; ++i) {
-                        valArr[i] = Pinyin.valueOf(tmpArr[i]);
-                    }
-                } catch (IllegalArgumentException e) {
-                    SmartCNHelper.logger.warn("拼音词典" + fileTxt + "有问题在【" + k + "=" + v + "】", e);
-                    return; // continue for next one
-                }
-                primaryMap.put(k, valArr);
-            });
-        }
+        // 加载默认数据
+        _load(primaryMap, txtFileDefault);
+        // 加载管理的数据，可以覆盖默认数据
+        _load(primaryMap, txtFileManaged);
+
         // build to trie
         long st = System.currentTimeMillis();
         trie.build(primaryMap);
-        SmartCNHelper.logger.info("trie.build + " + (System.currentTimeMillis() - st));
+        logger.info("trie.build + " + (System.currentTimeMillis() - st));
         // save to bin
         FileHelper.makeParents(binFile);
         st = System.currentTimeMillis();
@@ -104,7 +102,47 @@ public class PinyinConvertor extends AbstractDictionaryTrieApp<Pinyin[]> {
                 e.printStackTrace();
             }
         }
-        SmartCNHelper.logger.info("saveBin used after: " + (System.currentTimeMillis() - st));
+        logger.info("saveBin used time: " + (System.currentTimeMillis() - st));
+    }
+
+    private void _load(TreeMap<String, Pinyin[]> primaryMap, Object source) {
+        if (null == source) {
+            logger.warn("source is null");
+            return;
+        }
+
+        final StringDictionary dictionary = new StringDictionary("=");
+        //
+        String sourcePath = null;
+        if (source instanceof Path path && FileHelper.exists(path)) {
+            sourcePath = path.toString();
+            try (InputStream stream = Files.newInputStream(path)) {
+                dictionary.load(stream);
+            } catch (IOException e) {
+                logger.warn("load Path failed", e);
+            }
+        } else if (source instanceof URLConnection urlConn) {
+            sourcePath = urlConn.getURL().toString();
+            try (InputStream stream = new BufferedInputStream(urlConn.getInputStream())) {
+                dictionary.load(stream);
+            } catch (IOException e) {
+                logger.warn("load URL failed", e);
+            }
+        }
+        //
+        final String finalSourcePath = sourcePath;
+        dictionary.walkEntries((k, v) -> {
+            try {
+                final Object[] tmpArr = v.split(",");
+                final Pinyin[] valArr = new Pinyin[tmpArr.length];
+                for (int i = 0; i < tmpArr.length; ++i) {
+                    valArr[i] = Pinyin.valueOf((String) tmpArr[i]);
+                }
+                primaryMap.put(k, valArr);
+            } catch (Exception e) {
+                logger.warn("拼音词典" + finalSourcePath + "有问题在【" + k + "=" + v + "】", e);
+            }
+        });
     }
 
     public final List<Map.Entry<Character, Pinyin>> convert(String string) {
