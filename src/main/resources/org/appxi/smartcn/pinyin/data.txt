@@ -30744,5 +30744,11 @@
 还款=huan2,kuan3
 侠传=xia2,zhuan4
 僧祇=seng1,qi2
+祇林=qi2,lin2
+祇树=qi2,shu4
+祇陀=qi2,tuo2
+祇园=qi2,yuan2
+给孤独=ji3,gu1,du2
 𬬻=lu2
 𦶟=ruo4
+𫓴=mao2
