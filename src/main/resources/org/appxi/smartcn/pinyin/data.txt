@@ -17830,7 +17830,7 @@
 祄=xie4
 祅=yao1
 祆=xian1
-祇=zhi3,qi2
+祇=qi2,zhi3
 祈=qi2
 祉=zhi3
 祊=beng1,fang1
